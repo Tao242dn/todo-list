@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Todo List</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="app-card">
+        <header class="hero">
+          <div>
+            <p class="eyebrow">Task Manager</p>
+            <h1>Todo List</h1>
+            <p class="hero-copy">
+              Keep your day organized with a clean, focused workflow.
+            </p>
+          </div>
+          <button class="primary-btn" id="openAddModalBtn" type="button">
+            <i class="fa-solid fa-plus"></i>
+            <span>Add Todo</span>
+          </button>
+        </header>
+
+        <section class="overview">
+          <article class="stat-card">
+            <span>Total</span>
+            <strong id="totalCount">0</strong>
+          </article>
+          <article class="stat-card">
+            <span>Pending</span>
+            <strong id="pendingCount">0</strong>
+          </article>
+          <article class="stat-card">
+            <span>Completed</span>
+            <strong id="completedCount">0</strong>
+          </article>
+        </section>
+
+        <section class="toolbar">
+          <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input
+              id="searchInput"
+              type="text"
+              placeholder="Search todos..."
+              aria-label="Search todos"
+            />
+          </div>
+
+          <div class="filter-group" aria-label="Filter todos">
+            <button class="filter-btn active" data-filter="all" type="button">
+              All
+            </button>
+            <button class="filter-btn" data-filter="pending" type="button">
+              Pending
+            </button>
+            <button class="filter-btn" data-filter="completed" type="button">
+              Completed
+            </button>
+          </div>
+        </section>
+
+        <section class="todo-section">
+          <div class="todo-list" id="todoList"></div>
+          <div class="empty-state" id="emptyState">
+            <div class="empty-icon">
+              <i class="fa-regular fa-note-sticky"></i>
+            </div>
+            <h2>No todos found</h2>
+            <p>Add a new task or adjust your search/filter.</p>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <div class="modal-backdrop hidden" id="todoModal" aria-hidden="true">
+      <section
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modalTitle"
+      >
+        <div class="modal-header">
+          <div>
+            <p class="modal-caption" id="modalCaption">New task</p>
+            <h2 id="modalTitle">Add Todo</h2>
+          </div>
+          <button class="icon-btn" id="closeModalBtn" type="button" aria-label="Close modal">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <form id="todoForm" class="todo-form">
+          <input id="todoId" type="hidden" />
+
+          <label class="field">
+            <span>Title</span>
+            <input
+              id="todoTitle"
+              name="title"
+              type="text"
+              maxlength="80"
+              placeholder="What needs to be done?"
+              required
+            />
+          </label>
+
+          <label class="field">
+            <span>Description</span>
+            <textarea
+              id="todoDescription"
+              name="description"
+              rows="4"
+              maxlength="240"
+              placeholder="Add a short description"
+            ></textarea>
+          </label>
+
+          <div class="modal-actions">
+            <button class="secondary-btn" id="cancelModalBtn" type="button">
+              Cancel
+            </button>
+            <button class="primary-btn" id="submitTodoBtn" type="submit">
+              Save Todo
+            </button>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <script src="./script.js" type="module"></script>
+  </body>
+</html>
