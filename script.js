@@ -1,6 +1,7 @@
-const STORAGE_KEY = "modern-todo-list-items";
+const STORAGE_KEY = "todo-list-items";
 
 const state = {
+  editingId: null,
   todos: loadTodos(),
   filter: "all",
   search: "",
@@ -84,14 +85,14 @@ function renderTodos() {
       <input
         class="todo-check"
         type="checkbox"
-        aria-label="Mark ${escapeHtml(todo.title)} as completed"
+        aria-label="Mark ${todo.title} as completed"
         ${todo.completed ? "checked" : ""}
         data-action="toggle"
         data-id="${todo.id}"
       />
       <div class="todo-content">
-        <h3>${escapeHtml(todo.title)}</h3>
-        <p>${escapeHtml(todo.description || "No description added.")}</p>
+        <h3>${todo.title}</h3>
+        <p>${todo.description || "No description added."}</p>
         <div class="todo-meta">
           <span class="badge ${todo.completed ? "completed" : ""}">
             ${todo.completed ? "Completed" : "Pending"}
@@ -105,7 +106,7 @@ function renderTodos() {
           type="button"
           data-action="edit"
           data-id="${todo.id}"
-          aria-label="Edit ${escapeHtml(todo.title)}"
+          aria-label="Edit ${todo.title}"
         >
           <i class="fa-regular fa-pen-to-square"></i>
         </button>
@@ -114,7 +115,7 @@ function renderTodos() {
           type="button"
           data-action="delete"
           data-id="${todo.id}"
-          aria-label="Delete ${escapeHtml(todo.title)}"
+          aria-label="Delete ${todo.title}"
         >
           <i class="fa-regular fa-trash-can"></i>
         </button>
@@ -126,15 +127,6 @@ function renderTodos() {
 
   elements.emptyState.classList.toggle("hidden", todos.length > 0);
   renderStats();
-}
-
-function escapeHtml(value) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
 }
 
 function openModal(mode, todo = null) {
