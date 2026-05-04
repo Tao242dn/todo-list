@@ -1,4 +1,5 @@
 const STORAGE_KEY = "todo-list-items";
+const DRAGGED_TASK_ID = "dragged-task";
 
 const state = {
   editingId: null,
@@ -15,6 +16,7 @@ const elements = {
   completedCount: document.getElementById("completedCount"),
   searchInput: document.getElementById("searchInput"),
   filterButtons: document.querySelectorAll(".filter-btn"),
+  filterGroup: document.querySelector(".filter-group"),
   modal: document.getElementById("todoModal"),
   modalTitle: document.getElementById("modalTitle"),
   modalCaption: document.getElementById("modalCaption"),
@@ -81,6 +83,8 @@ function renderTodos() {
   todos.forEach((todo) => {
     const item = document.createElement("article");
     item.className = `todo-item${todo.completed ? " is-completed" : ""}`;
+    item.dataset.id = todo.id;
+    item.draggable = true;
     item.innerHTML = `
       <input
         class="todo-check"
@@ -127,6 +131,37 @@ function renderTodos() {
 
   elements.emptyState.classList.toggle("hidden", todos.length > 0);
   renderStats();
+}
+
+function makePlaceholder(draggedTask) {
+  const placeholder = document.createElement("article");
+  placeholder.className = "placeholder";
+  placeholder.setAttribute("aria-hidden", "true");
+  placeholder.style.height = `${draggedTask.offsetHeight}px`;
+  return placeholder;
+}
+
+function removePlaceholder() {
+  elements.todoList.querySelector(".placeholder")?.remove();
+}
+
+function syncTodosFromRenderedOrder() {
+  const orderedVisibleIds = [
+    ...elements.todoList.querySelectorAll(".todo-item"),
+  ].map((item) => item.dataset.id);
+  const visibleIds = new Set(orderedVisibleIds);
+  const visibleTodoMap = new Map(
+    state.todos
+      .filter((todo) => visibleIds.has(todo.id))
+      .map((todo) => [todo.id, todo]),
+  );
+
+  let nextVisibleIndex = 0;
+  state.todos = state.todos.map((todo) =>
+    visibleIds.has(todo.id)
+      ? visibleTodoMap.get(orderedVisibleIds[nextVisibleIndex++])
+      : todo,
+  );
 }
 
 function openModal(mode, todo = null) {
@@ -257,6 +292,91 @@ function handleFilterClick(event) {
   renderTodos();
 }
 
+function handleDragStart(event) {
+  const item = event.target.closest(".todo-item");
+  if (!item) {
+    return;
+  }
+
+  item.id = DRAGGED_TASK_ID;
+  if (event.dataTransfer) {
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("task", "");
+  }
+}
+
+function movePlaceholder(event) {
+  if (!event.dataTransfer?.types.includes("task")) {
+    return;
+  }
+
+  event.preventDefault();
+  const draggedTask = document.getElementById(DRAGGED_TASK_ID);
+  if (!draggedTask) {
+    return;
+  }
+
+  const tasks = event.currentTarget;
+  const existingPlaceholder = tasks.querySelector(".placeholder");
+
+  if (existingPlaceholder) {
+    const placeholderRect = existingPlaceholder.getBoundingClientRect();
+    if (
+      placeholderRect.top <= event.clientY &&
+      placeholderRect.bottom >= event.clientY
+    ) {
+      return;
+    }
+  }
+
+  for (const task of tasks.children) {
+    if (task.getBoundingClientRect().bottom >= event.clientY) {
+      if (task === existingPlaceholder) {
+        return;
+      }
+
+      existingPlaceholder?.remove();
+      if (task === draggedTask || task.previousElementSibling === draggedTask) {
+        return;
+      }
+
+      tasks.insertBefore(existingPlaceholder ?? makePlaceholder(draggedTask), task);
+      return;
+    }
+  }
+
+  existingPlaceholder?.remove();
+  if (tasks.lastElementChild === draggedTask) {
+    return;
+  }
+
+  tasks.append(existingPlaceholder ?? makePlaceholder(draggedTask));
+}
+
+function handleDrop(event) {
+  if (!event.dataTransfer?.types.includes("task")) {
+    return;
+  }
+
+  event.preventDefault();
+  const draggedTask = document.getElementById(DRAGGED_TASK_ID);
+  const placeholder = elements.todoList.querySelector(".placeholder");
+  if (!draggedTask || !placeholder) {
+    return;
+  }
+
+  elements.todoList.insertBefore(draggedTask, placeholder);
+  placeholder.remove();
+  syncTodosFromRenderedOrder();
+  saveTodos();
+  renderTodos();
+}
+
+function handleDragEnd() {
+  removePlaceholder();
+  document.getElementById(DRAGGED_TASK_ID)?.removeAttribute("id");
+}
+
 function initializeEvents() {
   elements.openAddModalBtn.addEventListener("click", () => openModal("add"));
   elements.closeModalBtn.addEventListener("click", closeModal);
@@ -264,12 +384,22 @@ function initializeEvents() {
   elements.form.addEventListener("submit", handleFormSubmit);
   elements.todoList.addEventListener("click", handleTodoActions);
   elements.todoList.addEventListener("change", handleTodoActions);
+  elements.todoList.addEventListener("dragstart", handleDragStart);
+  elements.todoList.addEventListener("dragover", movePlaceholder);
+  elements.todoList.addEventListener("drop", handleDrop);
+  elements.todoList.addEventListener("dragend", handleDragEnd);
+  elements.todoList.addEventListener("dragleave", (event) => {
+    if (elements.todoList.contains(event.relatedTarget)) {
+      return;
+    }
+
+    removePlaceholder();
+  });
   elements.searchInput.addEventListener("input", (event) => {
     state.search = event.target.value;
     renderTodos();
   });
-  document.querySelector(".filter-group").addEventListener("click", handleFilterClick);
-
+  elements.filterGroup.addEventListener("click", handleFilterClick);
   elements.modal.addEventListener("click", (event) => {
     if (event.target === elements.modal) {
       closeModal();
